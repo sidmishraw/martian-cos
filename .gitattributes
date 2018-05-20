@@ -1,0 +1,5 @@
+# linguist vendored -- ignore everything
+* linguist-vendored
+
+# check everything withing src directory
+src/**/* linguist-vendored=false
