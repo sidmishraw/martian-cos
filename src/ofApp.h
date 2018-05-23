@@ -10,7 +10,9 @@
 #include "octtree.h"
 
 #include "Tmnper.hpp"  // for persistence -- by sidmishraw
+#include "LoadedModel.h"
 
+using namespace sidmishraw_model;
 using namespace sidmishraw_octtree;
 using namespace std;
 
@@ -120,8 +122,12 @@ class ofApp : public ofBaseApp {
   //
   unsigned short int cameraIndex;
 
-  ofxAssimpModelLoader mars, rover;
+  ofxAssimpModelLoader mars; //, rover;
   ofLight light;
+  
+  /// The rover model loaded from a OBJ or 3DS file dropped into the viewport.
+  ///
+  LoadedModel rover;
 
   ofVec3f selectedPoint;
   ofVec3f intersectPoint;

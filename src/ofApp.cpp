@@ -125,8 +125,8 @@ void ofApp::updateCams() {
     // I need to multiply it with the model matrix to bring it
     // into world space.
     //
-    auto rmax = rover.getSceneMax() * rover.getModelMatrix();
-    auto rmin = rover.getSceneMin() * rover.getModelMatrix();
+    auto rmax = rover.getSceneMax() * rover.getTransformMatrix();
+    auto rmin = rover.getSceneMin() * rover.getTransformMatrix();
 
     // Driver's view
     // POV of the rover's driver - front
@@ -154,7 +154,6 @@ void ofApp::updateCams() {
     // POV of the rover's driver - rear
     // By default the camera looks back --
     //
-    //    cams[4].setPosition(ofVec3f(rpos.x, rmax.y, rmin.z));
     cams[4].setPosition(ofVec3f((rmax.x + rmin.x) / 2.0f, rmax.y, (rmax.z + rmin.z) / 2.0f));
 
     if (!bPanned) {
@@ -181,15 +180,6 @@ void ofApp::moveRover() {
 
   auto roverPos = thePath.getPointAtPercent(pct);  // next posn
   ofVec3f n(roverPos.x, 0, roverPos.z);            // get the projection on XZ plane
-
-  // -- didn't work as expected -- need to position the
-  // cameras in the middle
-  // POV - front and rear camera
-  //
-  //  cams[1].setTarget(thePath.getPointAtPercent(2 * nextPct()));
-  //  cams[1].lookAt(thePath.getPointAtPercent(2 * nextPct()), ofVec3f(0, 1, 0));
-  //  cams[4].setTarget(thePath.getPointAtPercent(2 * prevPct()));
-  //  cams[4].lookAt(thePath.getPointAtPercent(2 * prevPct()), ofVec3f(0, 1, 0));
 
   nextPtIndex++;  // may not be needed -- NOTE
 
@@ -247,15 +237,6 @@ void ofApp::update() {
   // Update the percantage of path covered
   //
   pct = nextPct();
-
-  // loop back to starting point to restart the animation
-  //
-  //  if (pct >= 1) {
-  //    pct = 0;
-  //    nextPtIndex = 1;
-  //    roverHeadingAngle = 0;
-  //    roverOrientation = ofVec3f(0, 0, 1);  // +ve Z axis
-  //  }
 }
 
 // -- added by sidmishraw
@@ -303,8 +284,6 @@ void ofApp::playAnimation() {
     log("Start pt = " + ofToString(strtPt), 1);
 
     ofVec3f s(strtPt.x, 0, strtPt.z);  // keeping the start point on the XZ plane, Y is the normal
-
-    //    log("Initial s = " + ofToString(s));
 
     // Set the rover's position to the start of the path
     //
@@ -368,7 +347,7 @@ void ofApp::drawBoundingBoxT() {
 //
 void ofApp::drawBoundingBoxR() {
   if (bRoverLoaded) {
-    auto roverMx = rover.getModelMatrix();
+    auto roverMx = rover.getTransformMatrix();
     ofPushMatrix();
     ofMultMatrix(roverMx);
     ofNoFill();
@@ -382,7 +361,7 @@ void ofApp::drawBoundingBoxR() {
       ofPushMatrix();
       ofNoFill();
       ofSetColor(0, 244, 33);
-      ofMultMatrix(rover.getModelMatrix());
+      ofMultMatrix(rover.getTransformMatrix());
       ofRotate(-90, 1, 0, 0);  // rotate 180 degrees about X axis
       drawBox(box);
       ofPopMatrix();
@@ -497,28 +476,6 @@ void ofApp::draw() {
   }
 
   thePath.draw();
-
-  //  for (int i = 0; i < 5; i++) {
-  //    switch (i) {
-  //      case 0:
-  //        ofSetColor(ofColor::green);
-  //        break;
-  //      case 1:
-  //        ofSetColor(ofColor::blue);
-  //        break;
-  //      case 2:
-  //        ofSetColor(ofColor::red);
-  //        break;
-  //      case 3:
-  //        ofSetColor(ofColor::white);
-  //        break;
-  //      case 4:
-  //        ofSetColor(ofColor::yellow);
-  //        break;
-  //    }
-  //
-  //    ofDrawLine(cams[i].getPosition(), cams[i].getTarget().getPosition());
-  //  }
 
   // Draw the co-ordinates of the point in the view port
   //
@@ -789,8 +746,8 @@ void ofApp::mouseMoved(int x, int y) {}
 bool ofApp::roverSelected(const ofVec3f &mousePoint) {
   bool hit = false;
 
-  ofVec3f rayPoint = cams[cameraIndex].screenToWorld(mousePoint) * rover.getModelMatrix().getInverse();
-  ofVec3f rayDir = rayPoint - (cams[cameraIndex].getPosition() * rover.getModelMatrix().getInverse());
+  ofVec3f rayPoint = cams[cameraIndex].screenToWorld(mousePoint) * rover.getTransformMatrix().getInverse();
+  ofVec3f rayDir = rayPoint - (cams[cameraIndex].getPosition() * rover.getTransformMatrix().getInverse());
   rayDir.normalize();
 
   Ray ray = Ray(Vector3(rayPoint.x, rayPoint.y, rayPoint.z), Vector3(rayDir.x, rayDir.y, rayDir.z));
@@ -826,7 +783,7 @@ void ofApp::mousePressed(int x, int y, int button) {
     auto rmx = boundingBoxR.max();
     auto rmi = boundingBoxR.min();
     auto c = (rmx + rmi) / 2.0;
-    selectedPoint = ofVec3f(c.x(), c.y(), c.z()) * rover.getModelMatrix();
+    selectedPoint = ofVec3f(c.x(), c.y(), c.z()) * rover.getTransformMatrix();
     log("Center - rover - bb = " + ofToString(selectedPoint));
 
   } else if (boundingBoxT.intersect(ray, -100, 100)) {
@@ -1090,7 +1047,7 @@ void ofApp::setCameraTarget() {
       auto rmx = boundingBoxR.max();
       auto rmi = boundingBoxR.min();
       auto c = (rmx + rmi) / 2.0;
-      selectedPoint = ofVec3f(c.x(), c.y(), c.z()) * rover.getModelMatrix();
+      selectedPoint = ofVec3f(c.x(), c.y(), c.z()) * rover.getTransformMatrix();
       log("Center - rover - bb = " + ofToString(selectedPoint));
     }
     cams[0].setTarget(selectedPoint);
